@@ -1,16 +1,16 @@
-# BIP39 Offline Recovery Tools
+# BIP39 Offline Wallet Recovery Tools
 
-[中文说明](README.zh-CN.md)
+[English README](../README.md)
 
-This project provides two offline-oriented Python utilities for recovering a Bitcoin wallet when most of the BIP39 mnemonic is already known. It is intended only for wallets you own or are explicitly authorized to recover.
+This project provides two Python tools intended for offline use to recover Bitcoin wallets when you already possess most of the BIP39 mnemonic information. Only use them to recover wallets that you own or for which you have received explicit authorization.
 
 
-## Related standards and libraries
+## Related Standards and Dependencies
 
-- [Bitcoin BIP39 specification and word lists](https://github.com/bitcoin/bips/tree/master/bip-0039): the Bitcoin Improvement Proposal resources defining mnemonic sentence construction, checksum rules, seed generation, and the official language word lists used by BIP39-compatible wallets.
-- [bip_utils](https://github.com/ebellocchia/bip_utils): the Python library used by this project for standard BIP39 seed generation and BIP44, BIP49, BIP84, and BIP86 key/address derivation.
+- [Bitcoin BIP39 Specification and Wordlists](https://github.com/bitcoin/bips/tree/master/bip-0039): Materials in the Bitcoin Improvement Proposals related to BIP39 mnemonics, including mnemonic construction, checksum rules, seed generation methods, and official language wordlists.
+- [bip_utils](https://github.com/ebellocchia/bip_utils): The Python library used by this project, responsible for standard BIP39 seed generation and key and address derivation for BIP44, BIP49, BIP84, and BIP86.
 
-## Project layout
+## Project Directory
 
 ```text
 bip39_recovery_tools_open_source/
@@ -26,27 +26,27 @@ bip39_recovery_tools_open_source/
     └── 02_bip39_wrong_words_recovery_zh.py
 ```
 
-The root scripts use English messages and comments. The scripts under `zh/` have Chinese messages, error text, comments, and docstrings while keeping the same algorithms and variable names.
+The scripts in the root directory use English prompts and English comments; the scripts in the `zh/` directory use Chinese prompts, Chinese error messages, Chinese comments, and Chinese explanatory text. Their algorithms are consistent with the English versions, while variable names remain in English for easier maintenance and comparison.
 
-## Choose the correct tool
+## Choosing the Correct Recovery Tool
 
 ### `01_bip39_order_recovery.py`
 
-Use this when every mnemonic word is correct but the order is unknown.
+Suitable for: all mnemonic words are correct, but their order has been scrambled.
 
-It supports 12, 18, or 24 English BIP39 words, accepts spaces or commas, supports an optional BIP39 passphrase, and checks Bitcoin mainnet BIP44, BIP49, BIP84, and BIP86 paths. It scans account 0 at external indexes 0 and 1 and internal/change indexes 0 and 1, for 16 paths in total.
+Supports 12, 18, or 24 English BIP39 words, accepts input separated by spaces or commas, and also supports an optional BIP39 passphrase. The program scans only the Bitcoin mainnet and checks BIP44, BIP49, BIP84, and BIP86. Under account 0, it scans external address indexes 0 and 1, as well as internal/change address indexes 0 and 1, for a total of 16 paths.
 
-A complete permutation search grows very quickly. Twelve distinct words have `12! = 479,001,600` possible orders. Fully shuffled 18-word and 24-word mnemonics are normally impractical to exhaust, even though the program follows the requested logic.
+The number of complete permutations grows extremely quickly. Twelve distinct words have `12! = 479,001,600` possible orders; fully scrambled 18-word and 24-word mnemonics usually cannot be exhaustively searched within a practical amount of time, although the program will still execute according to its configured logic.
 
 ### `02_bip39_wrong_words_recovery.py`
 
-Use this when the word order is correct, but zero, one, or two words may be wrong.
+Suitable for: the mnemonic order is correct, but 0, 1, or 2 words may be incorrect.
 
-It supports 12 or 24 English BIP39 words. When an entered word is outside the BIP39 list, its position is treated as a strong error-location hint. If all entered words are valid BIP39 words, the program must also search possible error positions. The target address prefix selects BIP44, BIP49, BIP84, or BIP86, and the script scans the same four account-0 locations for that standard.
+Supports 12 or 24 English BIP39 words. If an input word is not in the BIP39 wordlist, the program treats its position as a strong indication of an incorrect position; if all input words belong to the BIP39 wordlist, the program must also iterate through the possible incorrect positions. The target address prefix is used to select BIP44, BIP49, BIP84, or BIP86, after which the same 4 account-0 address positions under that standard are scanned.
 
-Two-word recovery can still be extremely large, especially when both incorrect words are themselves valid BIP39 words and neither position is known.
+The search space for two incorrect words may still be extremely large, especially when both incorrect words are themselves valid BIP39 words and both incorrect positions are unknown.
 
-## Scanned Bitcoin mainnet paths
+## Scanned Bitcoin Mainnet Paths
 
 ```text
 m/44'/0'/0'/0/0
@@ -70,39 +70,47 @@ m/86'/0'/0'/1/0
 m/86'/0'/0'/1/1
 ```
 
-The scripts do not scan other accounts, index 2 or above, custom derivation paths, multisignature wallets, descriptor wallets, or vendor-specific nonstandard paths.
+This project does not scan other accounts, indexes 2 and above, custom derivation paths, multisignature wallets, descriptor wallets, or nonstandard paths used by wallet vendors.
 
-## How the BIP39 checksum filter works
+## Accurate Explanation of the BIP39 Checksum
 
-A BIP39 mnemonic is not an arbitrary sequence of dictionary words. It encodes entropy plus checksum bits derived from the beginning of the SHA-256 hash of that entropy. The relationship is `CS = ENT / 32`, and the mnemonic contains `ENT + CS` bits divided into 11-bit word indexes.
+A BIP39 mnemonic is not an arbitrary sequence of words selected from a wordlist. It encodes random entropy and a checksum. The checksum is taken from the first several bits of the SHA-256 hash of that entropy, with the relationship `CS = ENT / 32`; the total number of bits carried by the mnemonic is `ENT + CS`, which is then mapped to a wordlist index every 11 bits.
 
-| Words | Entropy | Checksum | Random-candidate pass rate |
+| Number of Mnemonic Words | Entropy | Checksum | Average Pass Rate of Random Candidates |
 |---:|---:|---:|---:|
-| 12 | 128 bits | 4 bits | about 1 in 16 |
-| 18 | 192 bits | 6 bits | about 1 in 64 |
-| 24 | 256 bits | 8 bits | about 1 in 256 |
+| 12 | 128 bits | 4 bits | Approximately 1/16 |
+| 18 | 192 bits | 6 bits | Approximately 1/64 |
+| 24 | 256 bits | 8 bits | Approximately 1/256 |
 
-Both programs run this checksum test before PBKDF2 seed generation, BIP32 derivation, and address encoding. A candidate that fails checksum is skipped immediately and causes zero address comparisons. This is an important optimization, but checksum validity only proves that a candidate is structurally valid BIP39; it does not prove ownership or identify the correct wallet. The known Bitcoin address is the final verification step.
+Both programs perform the checksum before PBKDF2 seed generation, BIP32 derivation, and address encoding. Candidates that fail the checksum are skipped immediately, and the number of address comparisons is 0. This can significantly reduce the number of candidates that actually undergo address derivation.
 
-### Reproducible checksum test counts
 
-The following counts were obtained with the embedded 2048-word list and the checksum implementation included in the project:
+The BIP39 checksum is used to validate the mnemonic format and does not provide additional security.
+According to theoretical probability, a 12-word mnemonic can filter out 93.75% of random combinations, while a 24-word mnemonic can filter out approximately 99.61%;
+Passing validation only means that the format is valid
 
-1. Order-recovery test using eleven `abandon` words and one `about`: there are exactly 12 unique permutations. Exactly 1 permutation passes checksum and 11 are skipped, so only one candidate reaches address derivation during an exhaustive checksum scan.
-2. Wrong-word test using eleven `abandon` words and an invalid final word: replacing the last position with all 2,048 BIP39 words produces exactly 128 checksum-valid candidates and skips 1,920. Without checksum filtering, all 2,048 candidates would require seed/address work.
-3. In dictionary order, the correct final word `about` is replacement index 3. A search that stops on this known public match checks 4 replacements: 1 passes checksum and 3 are skipped before address derivation.
 
-These exact numbers apply to the stated public test cases. For other constrained candidate sets, the observed count can differ from the statistical expectation, although the checksum probabilities above remain the appropriate general estimate.
+Passing the checksum only indicates that the candidate is valid under the BIP39 structure. It does not prove that it is your wallet, nor does it prove ownership. Final confirmation must be made by an exact match between the derived address and a known Bitcoin address provided by the user.
 
-## Installation and operation
+### Reproducible Actual Checksum Test Counts
 
-Use Python 3.10 or newer. Install the pinned dependency:
+The following numbers come from the project's embedded 2,048-word wordlist and the checksum implementation in the scripts. They use public test data and can be reproduced:
+
+1. Order recovery test: use 11 instances of `abandon` and 1 instance of `about`. Because there are 11 repeated words, the total number of unique permutations is exactly 12. Of these, 1 has a valid checksum and 11 are skipped directly; during a complete checksum scan, only 1 candidate proceeds to address derivation.
+2. Incorrect-word recovery test: the first 11 words are `abandon`, and the final word is an incorrect word that is not in the wordlist. When all 2,048 BIP39 words are tried in the final position, 128 have valid checksums and 1,920 are skipped directly. Without checksum filtering, all 2,048 candidates would require seed and address calculations.
+3. When scanning in wordlist index order, the index of the correct final word `about` is 3. In the test that stops after the public address is matched, a total of 4 replacement words are checked, of which 1 has a valid checksum and 3 are skipped. Only the correct candidate actually proceeds to address derivation.
+
+These exact numbers apply only to the public test data described above. In other constrained candidate sets, the actual number of valid candidates may differ slightly from the statistical expectation, but the probabilities in the table above remain correct estimates in general.
+
+## Installation and Usage
+
+Python 3.10 or later is required. Install the pinned dependencies:
 
 ```text
 python -m pip install -r requirements.txt
 ```
 
-A safer workflow is to prepare a clean computer, install Python and the dependency, disconnect networking, then run one of the scripts:
+A safer operating procedure is to prepare a trusted and clean computer, install Python and the dependencies, disconnect from the network, and then run the scripts:
 
 ```text
 python 01_bip39_order_recovery.py
@@ -116,42 +124,53 @@ python zh/01_bip39_order_recovery_zh.py
 python zh/02_bip39_wrong_words_recovery_zh.py
 ```
 
-Input is requested interactively and is not supplied as a command-line argument. Mnemonic and passphrase text is visible on the terminal screen so it can be checked for typing mistakes.
+After startup, the program reads data through interactive input and does not take the mnemonic as a command-line argument. To make input errors easier to check, the mnemonic and passphrase are displayed on the terminal screen.
 
-## Protect the mnemonic
+## Be Sure to Protect the Mnemonic
 
-A complete mnemonic, together with its passphrase when one is used, is effectively the highest-level key to the wallet. Never send it to another person, paste it into a website, online form, chat service, cloud note, remote-support session, or untrusted recovery service. Do not livestream, screenshot, or screen-record the recovery session.
+A complete mnemonic together with the correct passphrase, if the wallet uses one, is essentially equivalent to the highest level of control over the wallet. Do not send a real mnemonic to anyone, and do not paste it into websites, online forms, chat software, cloud notes, remote assistance windows, or untrusted so-called “recovery services.”
 
-Prefer a clean, offline computer. Check for remote-control software, clipboard synchronization, cloud backup, keyloggers, malicious input methods, terminal logging, and virtual-machine host exposure. These scripts do not intentionally write the mnemonic, result, checkpoint, or log to disk, but the operating system and other software can still capture keyboard or screen data.
+Do not take screenshots, record the screen, livestream, or allow others to see the recovery process.
 
-After recovery, consider the old mnemonic exposed because it has appeared on a general-purpose computer. Generate a new wallet on a trusted hardware wallet or offline device, verify it with a small transfer, and move the remaining funds promptly.
+Prefer a trusted, clean, offline computer. Check for remote-control software, clipboard synchronization, cloud backups, keyloggers, malicious input methods, terminal logs, and exposure through the virtual machine host.
+The scripts themselves do not actively write the mnemonic, recovery results, progress checkpoints, or logs to disk, but the operating system and other software may still record keyboard or screen contents.
 
-## Public test vector
+After a successful recovery, the old mnemonic should be regarded as having been exposed on a general-purpose computer.
+It is recommended to use a trusted hardware wallet or offline device for import testing.
 
-Before entering real wallet data, test the environment with the public mnemonic:
+## Public Test Data
+
+Before formally entering real wallet information, it is recommended to first use the following public test mnemonic to check the environment:
 
 ```text
 abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about
 ```
 
-Leave the passphrase empty. The BIP84 address at `m/84'/0'/0'/0/0` is:
+Leave the passphrase blank. The public address for the BIP84 path `m/84'/0'/0'/0/0` is:
 
 ```text
 bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu
 ```
 
-For the order-recovery tool, move `about` to the beginning. Because the phrase contains eleven repeated words, only 12 unique permutations exist, making it suitable for a quick functional check rather than a speed benchmark.
+When testing order recovery, you can move `about` to the first position. Because this mnemonic contains 11 repeated instances of `abandon`, there are only 12 unique permutations. It is suitable for a quick functional check, but not as a speed benchmark for an ordinary scrambled 12-word mnemonic.
 
-For the wrong-word tool, replace the final `about` with a token not in the BIP39 list, such as `xxxxx`, and use the same public address. The script should identify position 12 and restore `about`.
+When testing incorrect-word recovery, you can replace the final `about` with `xxxxx`, which is not in the BIP39 wordlist, and continue using the same public address. The program should identify the 12th word and recover it as `about`.
 
-## Good-faith purpose and security limitations
+## Good-Faith Use and Security Boundaries
 
-This project is published in good faith to help legitimate wallet owners repair transcription mistakes, one- or two-word mistakes, and mnemonic ordering mistakes. It does not recover a wallet from a Bitcoin address alone, bypass Bitcoin cryptography, or make arbitrary unknown BIP39 secrets feasible to brute-force. A user must already possess nearly all of the mnemonic data, and usually a matching public address and any passphrase.
+This program is released entirely in good faith, with the hope of helping legitimate wallet owners resolve mnemonic transcription errors, one or two incorrect words, and mnemonic word-order errors.
 
-No software can technically guarantee that it will never be misused. Do not use this project with mnemonic material obtained without authorization. The maintainers do not endorse unauthorized access, theft, or attempts to recover wallets belonging to other people. Users are responsible for lawful and authorized use.
+This program cannot recover a wallet from a Bitcoin address alone, cannot make brute-force attacks on arbitrary unknown BIP39 mnemonics feasible, and has no attack capability.
+
 
 ## MIT License
 
-The project is released under the MIT License. You may use, copy, modify, merge, publish, distribute, sublicense, and sell copies, including modified versions, provided that the copyright notice and license text are retained in copies or substantial portions. The software is provided “as is,” without warranty. See [LICENSE](LICENSE) for the complete terms.
+This project is released under the MIT License. You may freely use, copy, modify, merge, publish, distribute, sublicense, and sell original or modified versions, but the copyright notice and license text must be retained in copies or substantial portions of the software.
 
-May this project help legitimate owners recover their wallets safely. Take your time, verify every address, put security before speed, and after recovery move funds to a fresh wallet. Wishing you a smooth recovery, a secure wallet, and abundant prosperity.
+The software is provided “as is,” without any express or implied warranty.
+
+For the complete terms, see the [MIT License](https://opensource.org/license/mit/).
+
+
+
+May this project help genuine wallet owners safely recover their assets. During recovery, please remain patient, verify each address one by one, and put security before speed; after a successful recovery, promptly transfer the assets to a brand-new wallet. Wishing everyone a smooth recovery, a safe wallet, and abundant wealth～
