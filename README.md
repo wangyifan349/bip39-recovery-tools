@@ -1,6 +1,8 @@
 # BIP39 Offline Wallet Recovery Tools
 
-[English README](../README.md)
+[English README](https://github.com/wangyifan349/bip39-recovery-tools/README.md)
+[Chinese README](https://github.com/wangyifan349/bip39-recovery-tools/zh/README.md)
+
 
 This project provides two Python tools intended for offline use to recover Bitcoin wallets when you already possess most of the BIP39 mnemonic information. Only use them to recover wallets that you own or for which you have received explicit authorization.
 
