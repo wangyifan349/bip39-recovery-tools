@@ -2,6 +2,8 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
+[GitHub repository](https://github.com/wangyifan349/bip39-recovery-tools) · [Issues](https://github.com/wangyifan349/bip39-recovery-tools/issues) · [`bip-utils` source](https://github.com/ebellocchia/bip_utils) · [`bip-utils` on PyPI](https://pypi.org/project/bip-utils/)
+
 Offline command-line tools for recovering two specific classes of English BIP39 mnemonic problems with the help of a **known Bitcoin mainnet address**:
 
 1. all mnemonic words are correct, but their order is unknown; or
@@ -255,12 +257,21 @@ The current implementation is single-process and single-threaded. It does not us
 ## Requirements
 
 - Python 3.10 or later;
-- `bip-utils==2.12.1` from `requirements.txt`;
+- Python's `pip` package manager;
+- direct project dependency: [`bip-utils==2.12.1`](https://pypi.org/project/bip-utils/);
 - sufficient CPU time;
 - preferably a trusted offline machine;
-- no Bitcoin node, RPC endpoint, explorer, balance API, or network lookup is required.
+- no Bitcoin node, RPC endpoint, block explorer, balance API, or network lookup is required.
 
-This is not a web application or server component. “Deployment” means installing its Python dependency in a local environment and running the scripts directly. Do not deploy it as a public website or collect mnemonics through web forms.
+`requirements.txt` currently declares one direct dependency:
+
+```text
+bip-utils==2.12.1
+```
+
+[`bip-utils`](https://github.com/ebellocchia/bip_utils) generates the seed from a candidate mnemonic and BIP39 passphrase, then performs the BIP44, BIP49, BIP84, and BIP86 key and Bitcoin-address derivation used by these scripts. `pip` installs its transitive dependencies automatically. The PyPI distribution name is **`bip-utils`**, while the Python import name is **`bip_utils`**. Do not install the different `bip` package or the misspelled `bip-untils`.
+
+This is not a web application or server component. “Deployment” means installing the dependency with the computer's existing Python installation and running the scripts directly. A virtual environment is not required or used in the instructions below. Do not deploy it as a public website or collect mnemonics through web forms.
 
 ## Local offline deployment
 
@@ -269,7 +280,7 @@ This is not a web application or server component. “Deployment” means instal
 1. Download the repository and dependencies on a trusted connected machine.
 2. Verify the source and record file hashes.
 3. Transfer the repository and dependencies using clean media.
-4. Install into a virtual environment on the offline computer.
+4. Install the dependencies with the offline computer's existing Python installation.
 5. Disable networking, remote control, cloud clipboard, synchronization, and screen recording.
 6. Validate the setup with the public test vector.
 7. Only then enter real recovery material.
@@ -277,47 +288,67 @@ This is not a web application or server component. “Deployment” means instal
 
 ### Windows PowerShell
 
+**🚀 Use the installed Python directly; do not create a virtual environment:**
+
 ```powershell
 cd bip39-recovery-tools
 
-py -3.10 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+py -3 --version
+py -3 -m pip install --upgrade pip
+py -3 -m pip install -r requirements.txt
 ```
 
-If activation is blocked, allow it only for the current PowerShell process:
+Confirm the installed dependency:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
+py -3 -m pip show bip-utils
 ```
 
 ### macOS or Linux
 
+**🚀 Use the system's `python3` command directly:**
+
 ```bash
 cd bip39-recovery-tools
 
-python3 -m venv .venv
-source .venv/bin/activate
-
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python3 --version
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
 ```
+
+Confirm the installed dependency:
+
+```bash
+python3 -m pip show bip-utils
+```
+
+> [!NOTE]
+> If you see `externally-managed-environment` or the operating system blocks changes to its bundled Python, use a separately installed Python 3.10+ distribution instead; Windows and macOS users can use the installer from [python.org](https://www.python.org/downloads/). Do not use `sudo pip` or force changes into an OS-managed Python installation. The dependency installation command and the recovery-script command must use the same Python interpreter.
 
 ### Installing dependencies without internet access
 
 On a connected machine compatible with the offline machine's operating system, CPU architecture, and Python version:
 
-```bash
-python -m pip download -r requirements.txt -d wheels
+Windows:
+
+```powershell
+py -3 -m pip download -r requirements.txt -d wheels
 ```
 
-Transfer the repository and `wheels/` directory, then install offline:
+macOS or Linux:
 
 ```bash
-python -m pip install --no-index --find-links wheels -r requirements.txt
+python3 -m pip download -r requirements.txt -d wheels
+```
+
+Transfer the repository and `wheels/` directory, then install with the same Python interpreter:
+
+```powershell
+py -3 -m pip install --no-index --find-links wheels -r requirements.txt
+```
+
+```bash
+python3 -m pip install --no-index --find-links wheels -r requirements.txt
 ```
 
 If pip downloads source distributions instead of compatible wheels, build tools may also be required offline. Downloading on an environment closely matching the offline system is the safest approach.
@@ -342,18 +373,22 @@ sha256sum 02_bip39_wrong_words_recovery.py
 
 ## Running the tools
 
-English scripts:
+Windows PowerShell:
 
-```bash
-python 01_bip39_order_recovery.py
-python 02_bip39_wrong_words_recovery.py
+```powershell
+py -3 .\01_bip39_order_recovery.py
+py -3 .\02_bip39_wrong_words_recovery.py
+py -3 .\zh\01_bip39_order_recovery_zh.py
+py -3 .\zh\02_bip39_wrong_words_recovery_zh.py
 ```
 
-Chinese scripts:
+macOS or Linux:
 
 ```bash
-python zh/01_bip39_order_recovery_zh.py
-python zh/02_bip39_wrong_words_recovery_zh.py
+python3 01_bip39_order_recovery.py
+python3 02_bip39_wrong_words_recovery.py
+python3 zh/01_bip39_order_recovery_zh.py
+python3 zh/02_bip39_wrong_words_recovery_zh.py
 ```
 
 Input words may be separated by spaces, ASCII commas, or Chinese commas. The code normalizes them with NFKD and converts them to lowercase.
@@ -372,7 +407,7 @@ An incorrect passphrase still produces a valid but entirely different wallet. Th
 
 ## Public test vector
 
-Use this public mnemonic before entering real secrets:
+🧪 Use this public mnemonic before entering real secrets:
 
 ```text
 abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about
@@ -445,13 +480,13 @@ The search stops at the first exact match. Independently verify the mnemonic, pa
 | A `3...` address does not match | It may not be BIP49 P2SH-P2WPKH | Confirm the wallet's actual address type and derivation path |
 | Very slow search | Candidate space is large | Recheck the scenario, known positions, address path, and all input details |
 | Cannot resume after interruption | No checkpoint implementation | Restart; assess search size before long runs |
-| `ModuleNotFoundError: bip_utils` | Dependency not installed in the active interpreter | Activate the venv and run `python -m pip install -r requirements.txt` |
+| `ModuleNotFoundError: bip_utils` | `bip-utils` is not installed for the interpreter running the script | Run `py -3 -m pip install -r requirements.txt` on Windows or `python3 -m pip install -r requirements.txt` on macOS/Linux |
 
 If no result is found, verify the word count, script choice, English BIP39 vocabulary, order assumptions, number of wrong words, exact passphrase, address ownership, mainnet network, derivation standard, account 0, and the four supported address positions.
 
 ## Security guidance
 
-Before running:
+Before running 🔐:
 
 - confirm ownership or explicit authorization;
 - obtain code from a trusted source and inspect it;
@@ -537,7 +572,7 @@ The checksum only proves structural validity. Many different mnemonics pass it; 
 
 ### Does the recovery process require internet access?
 
-No. Dependency installation commonly uses the internet, so download dependencies first and run the actual recovery offline.
+No. A first-time PyPI installation of `bip-utils` and its transitive dependencies normally uses the internet. Alternatively, download them into `wheels/`, transfer that directory, and install and run entirely offline.
 
 ### Does the program save the mnemonic?
 
